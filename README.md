@@ -1,90 +1,134 @@
-# GloVe-Based Sentiment Transfer Learning for Movie Recommendation
+# GloVe-Based Sentiment Classification with Cross-Domain Transfer Learning
 
-This project explores **cross-domain transfer learning in Natural Language Processing (NLP)** using **GloVe word embeddings**.  
-The objective is to study how sentiment knowledge learned from a **news classification domain (AG News)** can improve performance on a **movie review sentiment analysis task (IMDB)** and enable basic **movie recommendation based on review sentiment**.
+This project implements **movie review sentiment classification** using **GloVe word embeddings** and **cross-domain transfer learning**.  
+The goal is to evaluate how pretraining on a **non-movie text domain (AG News)** improves performance on **IMDB movie review sentiment analysis**.
+
+Instead of relying on large pretrained language models, this project uses a **lightweight Transformer Encoder architecture**, showing that strong results can be achieved with simpler NLP models.
 
 ---
 
 ## 📌 Project Overview
 
-The project is divided into three major stages:
+The project consists of two main experiments:
 
-1. **Baseline Sentiment Model on IMDB**
-   - Train a sentiment classification model directly on the IMDB movie reviews dataset.
-   - Use pretrained **GloVe embeddings** for word representation.
+### 1️⃣ Baseline IMDB Sentiment Classifier
+- Trained directly on the IMDB dataset
+- Uses pretrained **GloVe embeddings**
+- Learns sentiment patterns only from movie reviews
 
-2. **Cross-Domain Training and Fine-Tuning**
-   - Train a separate model on the **AG News dataset** using the same GloVe embeddings.
-   - Fine-tune the pretrained model on the **IMDB dataset**.
-   - Compare performance with the baseline IMDB-only model.
-
-3. **Movie Recommendation Based on Reviews**
-   - Use the trained sentiment model to analyze movie reviews.
-   - Recommend movies based on aggregated positive sentiment scores.
+### 2️⃣ Cross-Domain Transfer Learning (AG News → IMDB)
+- Pretrained on the **AG News dataset** to learn:
+  - Rich vocabulary representations
+  - General semantic and sentiment-aware features
+- Transferred pretrained weights to the IMDB task
+- Fine-tuned on IMDB for sentiment classification
 
 ---
 
 ## 🧠 Motivation
 
-Transfer learning is widely used in NLP, but most implementations rely on large transformer models.  
-This project focuses on **classic word embeddings (GloVe)** to understand:
+Most NLP transfer learning today relies on large transformer-based models such as BERT or RoBERTa.  
+This project focuses on understanding transfer learning using **classic word embeddings** and **lighter architectures**.
 
-- How much transferable sentiment knowledge exists across domains
-- Whether pretraining on non-movie text (news articles) improves movie review sentiment analysis
-- The effectiveness of lightweight NLP models compared to large transformer-based approaches
+Key questions explored:
+- How much sentiment knowledge transfers across domains
+- Whether news-domain pretraining improves movie review sentiment classification
+- How effective GloVe embeddings are when combined with Transformer encoders
+- Performance gains without large pretrained language models
 
 ---
 
 ## 🧾 Datasets Used
 
-- **IMDB Movie Reviews**
-  - Binary sentiment classification (positive / negative)
-  - 50,000 labeled reviews
+### IMDB Movie Reviews
+- Binary sentiment classification: **Positive / Negative**
+- 50,000 labeled movie reviews
 
-- **AG News**
-  - Multi-class news classification dataset
-  - Used for pretraining textual representations
+### AG News
+- Multi-class news classification dataset
+- Used only for **pretraining**
+- Helps build a strong and diverse vocabulary
 
 ---
 
-## 🛠️ Model Architecture
+## 🏗️ Model Architecture
 
-- Embedding Layer initialized with **pretrained GloVe vectors**
-- Sequence model (LSTM / CNN-based text classifier)
-- Fully connected classification head
-- Padding and batching handled via custom DataLoader and collate functions
+- **Embedding Layer**
+  - Initialized with pretrained **GloVe vectors**
+- **Transformer Encoder**
+  - Lightweight Transformer encoder block
+  - Captures contextual word relationships
+- **Feedforward Network**
+  - Two linear layers
+- **Final Classification Layer**
+  - Binary sentiment output
+
+### Fine-Tuning Strategy
+- Transformer encoder layers are **unfrozen**
+- Final classification layers are **unfrozen**
+- Embedding layer remains stable to preserve pretrained semantics
 
 ---
 
 ## ⚙️ Training Strategy
 
-1. Train IMDB baseline model from scratch using GloVe
-2. Train AG News model using the same embedding space
-3. Transfer weights and fine-tune on IMDB
-4. Evaluate and compare:
-   - Accuracy
-   - Loss convergence
-   - Generalization behavior
+### Baseline Model
+1. Initialize model with GloVe embeddings
+2. Train directly on IMDB dataset
+3. Evaluate test accuracy
+
+### Transfer Learning Model
+1. Pretrain model on AG News dataset
+2. Transfer learned weights
+3. Fine-tune on IMDB dataset
+4. Evaluate and compare performance
 
 ---
 
-## 📊 Evaluation
+## 📊 Results
 
-- Classification accuracy on IMDB test set
-- Comparison between:
-  - IMDB-only training
-  - AG News pretraining + IMDB fine-tuning
-- Qualitative review sentiment inspection
+| Model | Training Strategy | IMDB Test Accuracy |
+|------|------------------|-------------------|
+| Baseline | IMDB only | **65%** |
+| Transfer Learning | AG News → IMDB fine-tuning | **86%** |
 
----
-
-## 🎬 Movie Recommendation Logic
-
-- Predict sentiment for multiple reviews of a movie
-- Aggregate sentiment scores
-- Recommend movies with consistently positive review sentiment
+### Key Observations
+- Cross-domain pretraining significantly improves accuracy
+- AG News helps learn better vocabulary and semantic representations
+- Lightweight Transformer + GloVe is highly effective
+- Transfer learning improves generalization and reduces overfitting
 
 ---
 
-## 📁 Project Structure (planned)
+## 🎬 Application: Movie Review Sentiment Analysis
 
+- Classifies individual movie reviews as **positive or negative**
+- Can be extended to:
+  - Aggregate sentiment across reviews
+  - Rank movies based on overall sentiment scores
+
+---
+
+## 🚀 Key Takeaways
+
+- Transfer learning works well even across unrelated text domains
+- GloVe embeddings remain powerful for NLP tasks
+- Strong performance does not always require large pretrained models
+- Proper pretraining and fine-tuning strategies are critical
+
+---
+
+## 📌 Future Work
+
+- Add attention visualization
+- Experiment with different embedding dimensions
+- Extend to multi-class sentiment analysis
+- Compare with transformer-based pretrained models
+
+---
+
+## 📎 References
+
+- IMDB Movie Reviews Dataset
+- AG News Dataset
+- GloVe: Global Vectors for Word Representation
