@@ -1,15 +1,19 @@
-# GloVe-Based Sentiment Classification with Cross-Domain Transfer Learning
+# From Full to Efficient Fine-Tuning: Sentiment Classification with GloVe and Lightweight Transformers
 
-This project implements **movie review sentiment classification** using **GloVe word embeddings** and **cross-domain transfer learning**.  
-The goal is to evaluate how pretraining on a **non-movie text domain (AG News)** improves performance on **IMDB movie review sentiment analysis**.
+This project explores **movie review sentiment classification** using **GloVe word embeddings** and a **lightweight Transformer Encoder**, with a strong emphasis on **fine-tuning strategies** and **cross-domain transfer learning**.
 
-Instead of relying on large pretrained language models, this project uses a **lightweight Transformer Encoder architecture**, showing that strong results can be achieved with simpler NLP models.
+Instead of relying on large pretrained language models (e.g., BERT, RoBERTa), this work investigates how far we can go with:
+- Classic word embeddings (GloVe)
+- Smaller Transformer encoders
+- Carefully designed fine-tuning techniques
+
+A major focus of this project is experimenting with multiple fine-tuning approaches, analyzing their **accuracy, efficiency, and training cost**, and understanding the trade-offs between them.
 
 ---
 
 ## 📌 Project Overview
 
-The project consists of two main experiments:
+The project consists of two main phases:
 
 ### 1️⃣ Baseline IMDB Sentiment Classifier
 - Trained directly on the IMDB dataset
@@ -19,22 +23,21 @@ The project consists of two main experiments:
 ### 2️⃣ Cross-Domain Transfer Learning (AG News → IMDB)
 - Pretrained on the **AG News dataset** to learn:
   - Rich vocabulary representations
-  - General semantic and sentiment-aware features
-- Transferred pretrained weights to the IMDB task
-- Fine-tuned on IMDB for sentiment classification
+  - General semantic and contextual features
+- Pretrained weights are transferred to the IMDB task
+- Multiple **fine-tuning strategies** are explored and compared
 
 ---
 
 ## 🧠 Motivation
 
-Most NLP transfer learning today relies on large transformer-based models such as BERT or RoBERTa.  
-This project focuses on understanding transfer learning using **classic word embeddings** and **lighter architectures**.
+Most modern NLP pipelines depend heavily on large pretrained models.  
+This project intentionally takes a **lighter and more interpretable approach** to answer the following questions:
 
-Key questions explored:
-- How much sentiment knowledge transfers across domains
-- Whether news-domain pretraining improves movie review sentiment classification
-- How effective GloVe embeddings are when combined with Transformer encoders
-- Performance gains without large pretrained language models
+- How much knowledge transfers across unrelated text domains?
+- Can news-domain pretraining help movie review sentiment classification?
+- How effective are GloVe embeddings when combined with Transformer encoders?
+- Which fine-tuning strategy provides the best balance between accuracy, training time, and parameter efficiency?
 
 ---
 
@@ -46,8 +49,8 @@ Key questions explored:
 
 ### AG News
 - Multi-class news classification dataset
-- Used only for **pretraining**
-- Helps build a strong and diverse vocabulary
+- Used **only for pretraining**
+- Helps build robust semantic representations and vocabulary coverage
 
 ---
 
@@ -59,76 +62,133 @@ Key questions explored:
   - Lightweight Transformer encoder block
   - Captures contextual word relationships
 - **Feedforward Network**
-  - Two linear layers
+  - Two linear layers inside the Transformer encoder
 - **Final Classification Layer**
   - Binary sentiment output
 
-### Fine-Tuning Strategy
-- Transformer encoder layers are **unfrozen**
-- Final classification layers are **unfrozen**
-- Embedding layer remains stable to preserve pretrained semantics
+---
+
+## 🔧 Fine-Tuning Strategies (Core Contribution)
+
+This project systematically explores multiple fine-tuning techniques, highlighting their advantages and trade-offs.
 
 ---
 
-## ⚙️ Training Strategy
+### 🔹 1. Full Fine-Tuning (Baseline)
 
-### Baseline Model
-1. Initialize model with GloVe embeddings
-2. Train directly on IMDB dataset
-3. Evaluate test accuracy
+**Approach**
+- All model parameters are unfrozen:
+  - Embedding layer
+  - Transformer encoder
+  - Final classifier
 
-### Transfer Learning Model
-1. Pretrain model on AG News dataset
-2. Transfer learned weights
-3. Fine-tune on IMDB dataset
-4. Evaluate and compare performance
+**Result**
+- **IMDB Test Accuracy: 65%**
+
+**Observation**
+- Prone to overfitting
+- Slower convergence
+- Less effective despite higher parameter updates
 
 ---
 
-## 📊 Results
+### 🔹 2. Selective Fine-Tuning (Best Accuracy)
 
-| Model | Training Strategy | IMDB Test Accuracy |
-|------|------------------|-------------------|
-| Baseline | IMDB only | **65%** |
-| Transfer Learning | AG News → IMDB fine-tuning | **86%** |
+**Approach**
+- Frozen:
+  - Embedding layer
+  - Most Transformer encoder parameters
+- Unfrozen:
+  - TransformerEncoder.linear2
+  - Final classification layer
 
-### Key Observations
-- Cross-domain pretraining significantly improves accuracy
-- AG News helps learn better vocabulary and semantic representations
-- Lightweight Transformer + GloVe is highly effective
-- Transfer learning improves generalization and reduces overfitting
+**Result**
+- **IMDB Test Accuracy: 86%**
+
+**Advantages**
+- Strong generalization
+- Better stability during training
+- Efficient parameter updates
+
+---
+
+### 🔹 3. Additive Fine-Tuning (Adapter-Based)
+
+**Approach**
+- Introduced a feature adapter module:
+  - 2 Linear layers + 1 ReLU activation
+- Adapter placed between TransformerEncoder.linear1 and linear2
+- Only the following were unfrozen:
+  - Adapter layers
+  - Final classifier
+- Core Transformer weights remained frozen
+
+**Result**
+- **IMDB Test Accuracy: 78%**
+
+**Observation**
+- Improved parameter efficiency
+- Reduced risk of catastrophic forgetting
+
+---
+
+### 🔹 4. Efficient Adapter Fine-Tuning (Best Efficiency)
+
+**Approach**
+- Same adapter-based structure
+- Reduced dimensionality
+- Minimal number of trainable parameters
+- Faster convergence with fewer epochs
+
+**Result**
+- **IMDB Test Accuracy: 85%**
+- Achieved in significantly less training time
+
+---
+
+## ⚙️ Fine-Tuning Summary
+
+| Strategy | Trainable Parameters | Accuracy | Training Cost |
+|--------|---------------------|----------|---------------|
+| Full Fine-Tuning | All layers | 65% | High |
+| Selective Fine-Tuning | Encoder linear2 + classifier | **86%** | Moderate |
+| Additive (Adapter) | Adapter + classifier | 78% | Low |
+| Efficient Adapter | Minimal adapters | **85%** | **Very Low** |
+
+---
+
+## 📊 Training Analysis
+
+- Training loss and accuracy curves were plotted for each fine-tuning strategy
+- Clear differences observed in convergence speed, stability, and overfitting behavior
+
+All experiments and plots are available in the linked Kaggle notebooks.
 
 ---
 
 ## 🎬 Application: Movie Review Sentiment Analysis
 
 - Classifies individual movie reviews as **positive or negative**
-- Can be extended to:
-  - Aggregate sentiment across reviews
-  - Rank movies based on overall sentiment scores
+- Can be extended to aggregate sentiment analysis and movie ranking systems
 
 ---
 
 ## 🚀 Key Takeaways
 
-- Transfer learning works well even across unrelated text domains
-- GloVe embeddings remain powerful for NLP tasks
-- Strong performance does not always require large pretrained models
-- Proper pretraining and fine-tuning strategies are critical
+- Cross-domain transfer learning works well even with classic embeddings
+- Fine-tuning strategy matters more than model size
+- Lightweight Transformers can achieve strong results
+- Adapter-based fine-tuning offers excellent efficiency
+- Large pretrained models are not always necessary
 
 ---
 
-## 📌 Future Work
+## 📎 Resources & Notebooks
 
-- Add attention visualization
-- Experiment with different embedding dimensions
-- Extend to multi-class sentiment analysis
-- Compare with transformer-based pretrained models
+📓 Kaggle Notebooks:
+- Fine-Tuning Techniques (LoRA-inspired):  
+  https://www.kaggle.com/code/rajveergup1455/fine-tuning-using-lora
+- Sentiment Review Analysis:  
+  https://www.kaggle.com/code/rajveergup1455/fine-tune-sentiment-review-analysis
 
----
-
-## 📎 References
-
-- IMDB Movie Reviews Dataset
-- AG News Dataset
-- GloVe: Global Vectors for Word Representation
+⭐ If you find the notebooks useful, please consider upvoting them on Kaggle!
